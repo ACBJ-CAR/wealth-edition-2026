@@ -2,7 +2,7 @@
 name = "wealth-edition-2026"
 version = "0.1.0"
 description = "Downloading and processing Census data for the 2026 wealth edition"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "ipython",
     "ipykernel",
@@ -16,6 +16,8 @@ dependencies = [
     "ruff",
     "pre-commit",
     "jupytext",
+    "censusdis>=1.4.2",
+    "geopandas>=1.0.1",
 ]
 
 [tool.jupytext]
