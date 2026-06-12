@@ -1,0 +1,5 @@
+{
+    "aws_user_profile": "default",
+    "s3_bucket": "research-division-general",
+    "s3_path": "wealth-edition-2026"
+}

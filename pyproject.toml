@@ -1,0 +1,22 @@
+[project]
+name = "wealth-edition-2026"
+version = "0.1.0"
+description = "Downloading and processing Census data for the 2026 wealth edition"
+requires-python = ">=3.11"
+dependencies = [
+    "ipython",
+    "ipykernel",
+    "pandas",
+    "polars",
+    "matplotlib",
+    "notebook",
+    "jupyterlab",
+    "pyarrow",
+    "black",
+    "ruff",
+    "pre-commit",
+    "jupytext",
+]
+
+[tool.jupytext]
+formats = "ipynb,py:percent"
