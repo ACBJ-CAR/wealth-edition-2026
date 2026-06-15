@@ -27,7 +27,7 @@ def _(mo):
     Average home equity rate: **50%** (0.5)<br>
     Poverty rate included? No (0)
 
-    Use the filters to
+    Use the filters to select conditions for your market.
     """)
     return
 
@@ -74,7 +74,7 @@ def _(counties, metros, mo, states):
     min_income = mo.ui.number(label="Minimum median household income", start=0)
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
-    max_poverty = mo.ui.number(label="Maximum poverty rate")
+    max_poverty = mo.ui.number(label="Maximum poverty rate", start=100)
 
     state = mo.ui.multiselect(label="Select states: ", options=states, value=[])
     metro = mo.ui.multiselect(label="Select metros: ", options=metros, value=[])
@@ -157,7 +157,6 @@ def _(df, np):
     states = np.sort(df["State"].unique())
     counties = np.sort(df["County"].unique())
     metros = np.sort(df["Metro area"].unique())
-
     return counties, metros, states
 
 
