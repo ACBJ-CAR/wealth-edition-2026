@@ -8,8 +8,9 @@ app = marimo.App(width="medium")
 def _():
     import marimo as mo
     import pandas as pd
+    import numpy as np
 
-    return mo, pd
+    return mo, np, pd
 
 
 @app.cell
@@ -41,6 +42,7 @@ def _(pd):
 
     df = load_data()
     df["ZIP_CODE_TABULATION_AREA"] = df["ZIP_CODE_TABULATION_AREA"].str.zfill(5)
+    df["poverty_rate"] = df["poverty_rate"] * 100
 
     df.rename(
         columns={
@@ -60,26 +62,38 @@ def _(pd):
         },
         inplace=True,
     )
+
+    df["State"] = df["State"].fillna("NA")
+    df["Metro area"] = df["Metro area"].fillna("Not in metro area or metro not found")
+    df["County"] = df["County"].fillna("County not found")
     return (df,)
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
-def _(mo):
+def _(counties, metros, mo, states):
     min_income = mo.ui.number(label="Minimum median household income", start=0)
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
-    max_poverty = mo.ui.number(label="Maximum poverty rate", start=100)
-    # state = mo.ui.multiselect(options=options)
-    return max_poverty, min_area, min_income, min_pop
+    max_poverty = mo.ui.number(label="Maximum poverty rate")
+
+    state = mo.ui.multiselect(label="Select states: ", options=states, value=[])
+    metro = mo.ui.multiselect(label="Select metros: ", options=metros, value=[])
+    county = mo.ui.multiselect(label="Select counties: ", options=counties, value=[])
+    city = mo.ui.multiselect(label="Select cities: ", options="TKTK")
+    return (
+        city,
+        county,
+        max_poverty,
+        metro,
+        min_area,
+        min_income,
+        min_pop,
+        state,
+    )
 
 
 @app.cell
-def _(df, max_poverty, min_area, min_income, min_pop):
+def _(county, df, max_poverty, metro, min_area, min_income, min_pop, state):
     def filter_df():
         d = df.copy()
         d = d[
@@ -89,6 +103,13 @@ def _(df, max_poverty, min_area, min_income, min_pop):
         d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
         d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
         d = d[d["Poverty rate"].notna() & (d["Poverty rate"] <= max_poverty.value)]
+
+        if state.value:
+            d = d[d["State"].isin(state.value)]
+        if metro.value:
+            d = d[d["Metro area"].isin(metro.value)]
+        if county.value:
+            d = d[d["County"].isin(county.value)]
         return d
 
     return (filter_df,)
@@ -101,11 +122,24 @@ def _(max_poverty, min_area, min_income, min_pop, mo):
 
 
 @app.cell
+def _(city, county, metro, mo, state):
+    mo.hstack([state, county, metro, city])
+    return
+
+
+@app.cell
 def _(filter_df, mo):
     table_ui = mo.ui.table(
         filter_df(),
         show_data_types=False,
-        format_mapping={"Poverty rate": "{:.2%}".format},
+        format_mapping={
+            "Poverty rate": "{:.2}%".format,
+            "Total population": "{:,}".format,
+            "Population per sq. mi.": "{:,.2f}".format,
+            "Per capita income": "${:,.2f}".format,
+            "Median household income": "${:,.2f}".format,
+            "Homeownership rate": "{:.2%}".format,
+        },
         freeze_columns_left=["rank", "Zip code"],
     )
 
@@ -114,19 +148,27 @@ def _(filter_df, mo):
 
 
 @app.cell
-def _(df):
-    df.columns
+def _():
     return
 
 
 @app.cell
-def _(df):
-    df
-    return
+def _(df, np):
+    states = np.sort(df["State"].unique())
+    counties = np.sort(df["County"].unique())
+    metros = np.sort(df["Metro area"].unique())
+
+    return counties, metros, states
 
 
 @app.cell
 def _():
+    return
+
+
+@app.cell
+def _(a):
+    a
     return
 
 
