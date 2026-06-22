@@ -38,7 +38,14 @@ def _(pd):
         return pd.read_csv(
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
             dtype={"ZIP_CODE_TABULATION_AREA": "str"},
-            usecols=lambda col: col not in ["concentrated_wealth_per_sq_mile"],
+            usecols=lambda col: (
+                col
+                not in [
+                    "concentrated_wealth_per_sq_mile",
+                    "concentrated_wealth_per_sq_mile_rpp_adjusted",
+                    "concentrated_wealth_per_sq_mile_difference",
+                ]
+            ),
         )
 
     df = load_data()
@@ -60,6 +67,7 @@ def _(pd):
             "median_age": "Median age",
             "square_miles": "Sq. mi.",
             "home_ownership_rate": "Homeownership rate",
+            "usps_zip_pref_city": "City",
         },
         inplace=True,
     )
@@ -71,30 +79,23 @@ def _(pd):
 
 
 @app.cell
-def _(counties, metros, mo, states):
+def _(df, mo, np):
     min_income = mo.ui.number(label="Minimum median household income", start=0)
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
     max_poverty = mo.ui.number(label="Maximum poverty rate", start=100)
 
-    state = mo.ui.multiselect(label="Select states: ", options=states, value=[])
-    metro = mo.ui.multiselect(label="Select metros: ", options=metros, value=[])
-    county = mo.ui.multiselect(label="Select counties: ", options=counties, value=[])
-    city = mo.ui.multiselect(label="Select cities: ", options="TKTK")
-    return (
-        city,
-        county,
-        max_poverty,
-        metro,
-        min_area,
-        min_income,
-        min_pop,
-        state,
-    )
+    states = np.sort(df["State"].unique())
+    counties = np.sort(df["County"].unique())
+    metros = np.sort(df["Metro area"].unique())
+    cities = df["City"].unique().astype(str)
+    sorted_cities = np.sort(cities)
 
+    state = mo.ui.multiselect(label="Select states:", options=states, value=[])
+    metro = mo.ui.multiselect(label="Select metros:", options=metros, value=[])
+    county = mo.ui.multiselect(label="Select county:", options=counties, value=[])
+    city = mo.ui.multiselect(label="Select cities:", options=sorted_cities, value=[])
 
-@app.cell
-def _(county, df, max_poverty, metro, min_area, min_income, min_pop, state):
     def filter_df():
         d = df.copy()
         d = d[
@@ -113,7 +114,17 @@ def _(county, df, max_poverty, metro, min_area, min_income, min_pop, state):
             d = d[d["County"].isin(county.value)]
         return d
 
-    return (filter_df,)
+    return (
+        city,
+        county,
+        filter_df,
+        max_poverty,
+        metro,
+        min_area,
+        min_income,
+        min_pop,
+        state,
+    )
 
 
 @app.cell
@@ -134,7 +145,6 @@ def _(filter_df, mo):
         filter_df(),
         show_data_types=False,
         format_mapping={
-            "Poverty rate": "{:.2}%".format,
             "Total population": "{:,}".format,
             "Population per sq. mi.": "{:,.2f}".format,
             "Per capita income": "${:,.2f}".format,
@@ -149,17 +159,41 @@ def _(filter_df, mo):
 
 
 @app.cell
-def _(df, np):
-    states = np.sort(df["State"].unique())
-    counties = np.sort(df["County"].unique())
-    metros = np.sort(df["Metro area"].unique())
-    return counties, metros, states
+def _():
+    return
 
 
 @app.cell
 def _():
     # Computing national average her
     # features = df.drop(columns=["Zip code"])
+    return
+
+
+@app.cell
+def _(pd):
+    unfiltered_df = pd.read_csv(
+        "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
+        dtype={"ZIP_CODE_TABULATION_AREA": "str"},
+    ).nlargest(1000, "concentrated_wealth_per_sq_mile_rpp_adjusted")
+    return (unfiltered_df,)
+
+
+@app.cell
+def _(unfiltered_df):
+    wealthy_1000_raw = unfiltered_df.drop(
+        columns=[
+            "concentrated_wealth_per_sq_mile_rpp_adjusted",
+            "concentrated_wealth_per_sq_mile",
+            "concentrated_wealth_per_sq_mile_difference",
+        ]
+    )
+    wealthy_1000_raw
+    return
+
+
+@app.cell
+def _():
     return
 
 
