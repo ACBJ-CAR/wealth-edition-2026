@@ -38,6 +38,7 @@ def _(pd):
         return pd.read_csv(
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
             dtype={"ZIP_CODE_TABULATION_AREA": "str"},
+            usecols=lambda col: col not in ["concentrated_wealth_per_sq_mile"],
         )
 
     df = load_data()
@@ -148,11 +149,6 @@ def _(filter_df, mo):
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
 def _(df, np):
     states = np.sort(df["State"].unique())
     counties = np.sort(df["County"].unique())
@@ -162,12 +158,8 @@ def _(df, np):
 
 @app.cell
 def _():
-    return
-
-
-@app.cell
-def _(a):
-    a
+    # Computing national average her
+    # features = df.drop(columns=["Zip code"])
     return
 
 
