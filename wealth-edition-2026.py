@@ -34,11 +34,17 @@ def _(mo):
 
 
 @app.cell
+def _(df):
+    df.columns
+    return
+
+
+@app.cell
 def _(pd):
     def load_data():
         return pd.read_csv(
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
-            dtype={"ZIP_CODE_TABULATION_AREA": "str"},
+            dtype={"ZIP": "str"},
             usecols=lambda col: (
                 col
                 not in [
@@ -50,12 +56,12 @@ def _(pd):
         )
 
     df = load_data()
-    df["ZIP_CODE_TABULATION_AREA"] = df["ZIP_CODE_TABULATION_AREA"].str.zfill(5)
+    df["ZIP"] = df["ZIP"].str.zfill(5)
     df["poverty_rate"] = df["poverty_rate"] * 100
 
     df.rename(
         columns={
-            "ZIP_CODE_TABULATION_AREA": "Zip code",
+            "ZIP": "Zip code",
             "CBSA_NAME": "Metro area",
             "COUNTYNAME": "County",
             "STATE": "State",
@@ -140,7 +146,6 @@ def _(d0, mo, np, prev_state, state):
         options=metros,
         value=prev_state,
     )
-
     return d1, metro
 
 
@@ -161,7 +166,6 @@ def _(d1, metro, mo, np):
         options=counties,
         value=prev_county,
     )
-
     return county, d2
 
 
@@ -186,17 +190,12 @@ def _(county, d2, mo, np):
 
 
 @app.cell
-def _(city, d3, min_area, min_area_toggle):
+def _(city, d3):
     def filter_df():
         d = d3.copy()
 
         if city.value:
             d = d[d["City"].isin(city.value)]
-
-        if min_area_toggle.value:
-            d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= 0.5)]
-        else:
-            d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
 
         return d
 
@@ -213,14 +212,6 @@ def _(max_poverty, min_area, min_income, min_pop, mo):
 def _(city, county, metro, mo, state):
     mo.hstack([state, county, metro, city])
     return
-
-
-@app.cell
-def _(mo):
-
-    min_area_toggle = mo.ui.checkbox(label="Exclude ZIPs < 0.5 sq mi", value=True)
-    min_area_toggle
-    return (min_area_toggle,)
 
 
 @app.cell
@@ -258,7 +249,7 @@ def _(filter_df, mo):
             "Median household income": "${:,.2f}".format,
             "Homeownership rate": "{:.2%}".format,
         },
-        freeze_columns_left=["rank", "Zip code"],
+        freeze_columns_left=["Rank", "Zip code"],
     )
 
     table_ui
@@ -348,16 +339,6 @@ def _(unfiltered_df):
     )
 
     wealthy_1000
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 
