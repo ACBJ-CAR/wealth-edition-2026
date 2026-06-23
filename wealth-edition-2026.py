@@ -17,12 +17,20 @@ def _():
 @app.cell
 def _(mo):
     mo.md(r"""
-    #ACBJ's Wealth Edition
+    <h1>
+        ACBJ's Wealth Edition
+    </h1>
     ### This page contains the data and scores for ACBJ's wealth edition. Data is from the American Community Survey 2024 5-year estimates.
 
     Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. In addition, ACBJ's research division has made a number of assumptions to estimate total wealth in a ZIP code.
 
     The unfiltered, baseline dataset includes all ZIP codes. Depending on your market's economic situation, you may want to adjust the minimum per capita income, population, land area, or maximum poverty rate. The Wealthy 1000, which is a national look of the country's wealthiest ZIP codes according to our formula, is at the bottom of this page.
+
+    **Instructions**
+
+    Start by selecting the states you want, then narrow to your metro area and/or counties. The geographic defintions used in this dataset come from the Census Bureau or USPS, so they may not match your coverage area exactly. Be aware the filter logic goes from largest to smallest, so if you select a city first, you may produce unexpected results.
+
+    Once you've selected your relevant areas, take a look at the table it produces. In most cases, you'll be ready to click the download button without any additional filtering. In some markets, particularly in those with large or small ZIP codes, or with ones with great income diversity, you may need to set a minimum for income, land area or population. Enter in minimums until the results look acceptable to you.
 
     <!-- <u>Baseline assumptions</u>: <br>
     Age savings start: **25**<br>
@@ -30,12 +38,6 @@ def _(mo):
     Average home equity rate: **50%** (0.5)<br>
     Poverty rate included? No (0) -->
     """)
-    return
-
-
-@app.cell
-def _(df):
-    df.columns
     return
 
 
@@ -90,12 +92,13 @@ def _(mo):
     min_income = mo.ui.number(label="Minimum median household income", start=0)
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
+    min_pop_per_sqmi = mo.ui.number(label="Minimum population per sq. mi.", start=0)
     max_poverty = mo.ui.number(label="Maximum poverty rate", start=100)
-    return max_poverty, min_area, min_income, min_pop
+    return max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi
 
 
 @app.cell
-def _(df, max_poverty, min_area, min_income, min_pop):
+def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
     def base_filtered(df):
         d = df.copy()
         d = d[
@@ -105,6 +108,10 @@ def _(df, max_poverty, min_area, min_income, min_pop):
         d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
         d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
         d = d[d["Poverty rate"].notna() & (d["Poverty rate"] <= max_poverty.value)]
+        d = d[
+            d["Population per sq. mi."].notna()
+            & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
+        ]
         return d
 
     d0 = base_filtered(df)
@@ -203,14 +210,14 @@ def _(city, d3):
 
 
 @app.cell
-def _(max_poverty, min_area, min_income, min_pop, mo):
-    mo.hstack([min_income, min_area, min_pop, max_poverty])
+def _(max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi, mo):
+    mo.hstack([min_income, min_area, min_pop, min_pop_per_sqmi, max_poverty])
     return
 
 
 @app.cell
 def _(city, county, metro, mo, state):
-    mo.hstack([state, county, metro, city])
+    mo.hstack([state, metro, county, city])
     return
 
 
