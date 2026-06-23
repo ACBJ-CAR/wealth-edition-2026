@@ -51,7 +51,6 @@ def _(pd):
                 col
                 not in [
                     "concentrated_wealth_per_sq_mile",
-                    "concentrated_wealth_per_sq_mile_rpp_adjusted",
                     "concentrated_wealth_per_sq_mile_difference",
                 ]
             ),
@@ -59,7 +58,7 @@ def _(pd):
 
     df = load_data()
     df["ZIP"] = df["ZIP"].str.zfill(5)
-    df["poverty_rate"] = df["poverty_rate"] * 100
+    df["poverty_rate"] = df["poverty_rate"]
 
     df.rename(
         columns={
@@ -84,6 +83,10 @@ def _(pd):
     df["State"] = df["State"].fillna("NA")
     df["Metro area"] = df["Metro area"].fillna("Not in metro area or metro not found")
     df["County"] = df["County"].fillna("County not found")
+    df["_rank"] = df["concentrated_wealth_per_sq_mile_rpp_adjusted"].rank(
+        ascending=False
+    )
+    df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
     return (df,)
 
 
@@ -93,13 +96,14 @@ def _(mo):
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
     min_pop_per_sqmi = mo.ui.number(label="Minimum population per sq. mi.", start=0)
-    max_poverty = mo.ui.number(label="Maximum poverty rate", start=100)
+    max_poverty = mo.ui.number(label="Maximum poverty rate", stop=100)
     return max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi
 
 
 @app.cell
 def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
     def base_filtered(df):
+
         d = df.copy()
         d = d[
             d["Per capita income"].notna()
@@ -112,6 +116,7 @@ def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
             d["Population per sq. mi."].notna()
             & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
         ]
+
         return d
 
     d0 = base_filtered(df)
@@ -201,10 +206,21 @@ def _(city, d3):
     def filter_df():
         d = d3.copy()
 
+        d = d.assign(**{"Rank_within_selection": lambda d: range(1, len(d) + 1)})
+
+        d.insert(
+            loc=0, column="Rank within selection", value=d["Rank_within_selection"]
+        )
+        d.insert(loc=1, column="National rank", value=d["_rank"])
+
+        d = d.drop(columns="_rank")
+        d = d.drop(columns="rank")
+        d = d.drop(columns="Rank_within_selection")
+
         if city.value:
             d = d[d["City"].isin(city.value)]
-
-        return d
+        else:
+            return d
 
     return (filter_df,)
 
@@ -247,24 +263,21 @@ def _(BytesIO, filter_df, mo, pd):
 @app.cell
 def _(filter_df, mo):
     table_ui = mo.ui.table(
-        filter_df(),
+        filter_df().reset_index(drop=True),
         show_data_types=False,
         format_mapping={
             "Total population": "{:,}".format,
             "Population per sq. mi.": "{:,.2f}".format,
             "Per capita income": "${:,.2f}".format,
             "Median household income": "${:,.2f}".format,
+            "Poverty rate": "{:.2%}".format,
             "Homeownership rate": "{:.2%}".format,
+            "Sq. mi.": "{:,.2f}".format,
         },
-        freeze_columns_left=["Rank", "Zip code"],
+        freeze_columns_left=["Zip code"],
     )
 
     table_ui
-    return
-
-
-@app.cell
-def _():
     return
 
 

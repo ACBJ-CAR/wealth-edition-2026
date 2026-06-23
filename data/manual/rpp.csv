@@ -388,9 +388,4 @@ GeoFIPS,GeoName,rpp
 49660,"Youngstown-Warren, OH (Metropolitan Statistical Area)",87.394
 49700,"Yuba City, CA (Metropolitan Statistical Area)",104.233
 49740,"Yuma, AZ (Metropolitan Statistical Area)",92.706
-,,
-Legend/Footnotes,,
-* Nonmetropolitan portion includes micropolitan counties.,,
-"* Regional Price Parities are not available for Enid, OK prior to 2013, Twin Falls, ID prior to 2015, and Kiryas Joel-Poughkeepsie-Newburgh, NY (Metropolitan Statistical Area) prior to 2016.",,
-"  Metropolitan Areas are defined (geographically delineated) by the Office of Management and Budget (OMB) bulletin no. 23-01 issued July 21, 2023.",,
-"  Last updated: February 19, 2026-- new statistics for 2024; revised statistics for 2008-2023.",,
+99999,Not in CBSA,100
