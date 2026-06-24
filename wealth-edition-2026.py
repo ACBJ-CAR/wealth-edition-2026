@@ -22,7 +22,7 @@ def _(mo):
     </h1>
     ### This page contains the data and scores for ACBJ's wealth edition. Data is from the American Community Survey 2024 5-year estimates.
 
-    Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. In addition, ACBJ's research division has made a number of assumptions to estimate total wealth in a ZIP code.
+    Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. In addition, &nbsp;ACBJ's Research Division has made a number of assumptions to estimate total wealth in a ZIP code.
 
     The unfiltered, baseline dataset includes all ZIP codes. Depending on your market's economic situation, you may want to adjust the minimum per capita income, population, land area, or maximum poverty rate. The Wealthy 1000, which is a national look of the country's wealthiest ZIP codes according to our formula, is at the bottom of this page.
 
@@ -31,6 +31,8 @@ def _(mo):
     Start by selecting the states you want, then narrow to your metro area and/or counties. The geographic defintions used in this dataset come from the Census Bureau or USPS, so they may not match your coverage area exactly. Be aware the filter logic goes from largest to smallest, so if you select a city first, you may produce unexpected results.
 
     Once you've selected your relevant areas, take a look at the table it produces. In most cases, you'll be ready to click the download button without any additional filtering. In some markets, particularly in those with large or small ZIP codes, or with ones with great income diversity, you may need to set a minimum for income, land area or population. Enter in minimums until the results look acceptable to you.
+
+    You can find our full methodology here (internal only), and a reader-friendly methodology you can link to in stories here. Links TKTK
 
     <!-- <u>Baseline assumptions</u>: <br>
     Age savings start: **25**<br>
@@ -201,12 +203,6 @@ def _(county, d2, mo, np):
 
 
 @app.cell
-def _(df):
-    df.columns
-    return
-
-
-@app.cell
 def _(city, d3):
     def filter_df():
         d = d3.copy()
@@ -306,7 +302,7 @@ def _(mo):
     mo.md(r"""
     # Wealthy 1000
 
-    These are the nation's 1000 wealthiest ZIP code areas.
+    These are the nation's 1000 wealthiest ZIP code areas using our ranking. Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. ACBJ's Research Division has made a number of assumptions to estimate total wealth in a ZIP code. Like in the above, we're only including areas that are at least 0.5 sq. mi.
     """)
     return
 
@@ -333,7 +329,7 @@ def _(BytesIO, make_excel_bytes, mo, pd, unfiltered_df):
 
 
 @app.cell
-def _(unfiltered_df):
+def _(mo, unfiltered_df):
     wealthy_1000 = unfiltered_df.drop(
         columns=[
             "concentrated_wealth_per_sq_mile_rpp_adjusted",
@@ -362,7 +358,26 @@ def _(unfiltered_df):
         inplace=True,
     )
 
-    wealthy_1000
+    table_ui_1000 = mo.ui.table(
+        wealthy_1000.reset_index(drop=True),
+        show_data_types=False,
+        format_mapping={
+            "Total population": "{:,}".format,
+            "Population per sq. mi.": "{:,.2f}".format,
+            "Per capita income": "${:,.2f}".format,
+            "Median household income": "${:,.2f}".format,
+            "Poverty rate": "{:.2%}".format,
+            "Homeownership rate": "{:.2%}".format,
+            "Sq. mi.": "{:,.2f}".format,
+        },
+        freeze_columns_left=["ZIP"],
+    )
+    table_ui_1000
+    return
+
+
+@app.cell
+def _():
     return
 
 
