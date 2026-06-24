@@ -58,7 +58,6 @@ def _(pd):
 
     df = load_data()
     df["ZIP"] = df["ZIP"].str.zfill(5)
-    df["poverty_rate"] = df["poverty_rate"]
 
     df.rename(
         columns={
