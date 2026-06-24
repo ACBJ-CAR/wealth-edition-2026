@@ -201,6 +201,12 @@ def _(county, d2, mo, np):
 
 
 @app.cell
+def _(df):
+    df.columns
+    return
+
+
+@app.cell
 def _(city, d3):
     def filter_df():
         d = d3.copy()
@@ -213,7 +219,6 @@ def _(city, d3):
         d.insert(loc=1, column="National rank", value=d["_rank"])
 
         d = d.drop(columns="_rank")
-        d = d.drop(columns="rank")
         d = d.drop(columns="Rank_within_selection")
 
         if city.value:
