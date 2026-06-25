@@ -8,29 +8,40 @@ Downloading and processing Census data for the 2026 wealth edition
 
 ## Project goal
 
-*TK: Briefly describe this project*
+American City Business Journals analyzed Census Bureau data to determine the nation's wealthiest 1,000 ZIP code areas, and to rank each area by its concentrated wealth per square mile.
 
 ## Methodology
 
-*TK: Link to or state methodology here*
+In this notebook, we download national ZCTA-level demographic data and geographies using Censusdis, then apply our formula to each area.
+
+ACBJ developed a formula that considers a number of demographic and economic data points: per capita income, median home value, population per square mile and median age. We take these metrics and adjust for the land area of each ZIP code to determine the area's wealth per square mile. We then adjust each ZIP code's wealth score to account for regional differences in affordability. More expensive areas receive a lower score in this step.
+
+We make a number of assumptions to estimate wealth in each area. We assume:
+- The typical person saves 10% of their income
+- The typical person starts saving at age 25
+- The typical homeowner has 50% home equity
+
+Then we apply our formula to each ZIP code that has all the data points we consider. Our formula components:
+```
+Assumed savings per person = income per capita * (median age - 25) * 10%
+
+Assumed home equity per person = (homeownership rate * median home value) * 50%
+
+Concentrated wealth per square mile = (population per square mile * Assumed savings per person) + (population per square mile * Assumed home equity per person)
+
+Adjusted concentrated wealth per square mile = (Concentrated wealth per square mile / Regional price parity) * 100
+
+```
 
 ## Data sources
 
-### TK Source 1
+### Census Bureau
 
-Source: *TK: source attribution (e.g. U.S. Census Bureau)*
+Source: *Census Bureau's American Community Survey 2024 five-year estimates*
 
-Source URL: *TK: source URL*
+### Bureau of Economic Analysis
 
-*TK: any notes or links about the source go here*
-
-### TK Source 2
-
-Source: *TK: source attribution (e.g. U.S. Census Bureau)*
-
-Source URL: *TK: source url*
-
-*TK: any notes or links about the source go here*
+Source: *[BEA's Regional Price Parities]* (https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area)
 
 ## Project usage
 
@@ -46,7 +57,7 @@ Source URL: *TK: source url*
 
 1. Run `uv run jupyter labs` or open notebook in VS Code
 > Reminder: Git is not tracking or saving notebooks. Instead, using jupytext, notebooks are synced with a .py file. Any changes made in either file sync with the other paired file when you save. If you are using VS Code for editing your notebooks, you must have the "Jupytext Sync" VS code extension.
-
+2. To open the Marimo notebook, run `marimo edit wealth-edition-2026.py` in the project's root directory.
 
 
 **Commiting changes to GitHub**
@@ -58,4 +69,6 @@ Source URL: *TK: source url*
 
 ## Data notes
 
-* Add important caveats, limitations, and source contact info here.
+* We use the term "ZIP code" here as a shorthand for ZIP Code Tabulation Area. ZIP codes are used to coordinate USPS mail delivery routes and can be subsets of each other or be composed only of PO boxes. ZCTAs are the Census Bureau's geographic representations of ZIP codes.
+
+We only include ZIP codes that have a land area of more than 0.5 square miles. Only ZIP codes that had all data points considered by the formula were ranked. Roughly 2,000 ZIP codes across the country's about 33,000 ZIP codes were excluded.
