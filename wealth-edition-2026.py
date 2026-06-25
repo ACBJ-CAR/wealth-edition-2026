@@ -33,7 +33,10 @@ def _(mo):
     Once you've selected your relevant areas, take a look at the table it produces. In most cases, you'll be ready to click the download button without any additional filtering. In some markets, particularly in those with large or small ZIP codes, or with ones with great income diversity, you may need to set a minimum for income, land area or population. Enter in minimums until the results look acceptable to you.
 
     You can find our full methodology here (internal only), and a reader-friendly methodology you can link to in stories here. Links TKTK
-
+    <div style="display: flex; gap: 5px">
+        <img src = "https://media.bizj.us/view/img/12800587/mspbj-ethan-nelson.webp" style="width:80px;height:80px;">
+        <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson.</a></span>
+    </div>
     <!-- <u>Baseline assumptions</u>: <br>
     Age savings start: **25**<br>
     Average lifetime savings rate: **10%** (0.1)<br>
