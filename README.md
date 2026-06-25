@@ -54,6 +54,6 @@ Source: [*BEA's Regional Price Parities*](https://www.bea.gov/data/prices-inflat
 
 ## Data notes
 
-* We use the term "ZIP code" here as a shorthand for ZIP Code Tabulation Area. ZIP codes are used to coordinate USPS mail delivery routes and can be subsets of each other or be composed only of PO boxes. ZCTAs are the Census Bureau's geographic representations of ZIP codes.
+- We use the term "ZIP code" here as a shorthand for ZIP Code Tabulation Area. ZIP codes are used to coordinate USPS mail delivery routes and can be subsets of each other or be composed only of PO boxes. ZCTAs are the Census Bureau's geographic representations of ZIP codes.
 
-We only include ZIP codes that have a land area of more than 0.5 square miles. Only ZIP codes that had all data points considered by the formula were ranked. Roughly 2,000 ZIP codes across the country's about 33,000 ZIP codes were excluded.
+- We only include ZIP codes that have a land area of more than 0.5 square miles. Only ZIP codes that had all data points considered by the formula were ranked. Roughly 2,000 ZIP codes across the country's about 33,000 ZIP codes were excluded.
