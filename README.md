@@ -16,23 +16,6 @@ In this notebook, we download national ZCTA-level demographic data and geographi
 
 ACBJ developed a formula that considers a number of demographic and economic data points: per capita income, median home value, population per square mile and median age. We take these metrics and adjust for the land area of each ZIP code to determine the area's wealth per square mile. We then adjust each ZIP code's wealth score to account for regional differences in affordability. More expensive areas receive a lower score in this step.
 
-We make a number of assumptions to estimate wealth in each area. We assume:
-- The typical person saves 10% of their income
-- The typical person starts saving at age 25
-- The typical homeowner has 50% home equity
-
-Then we apply our formula to each ZIP code that has all the data points we consider. Our formula components:
-```
-Assumed savings per person = income per capita * (median age - 25) * 10%
-
-Assumed home equity per person = (homeownership rate * median home value) * 50%
-
-Concentrated wealth per square mile = (population per square mile * Assumed savings per person) + (population per square mile * Assumed home equity per person)
-
-Adjusted concentrated wealth per square mile = (Concentrated wealth per square mile / Regional price parity) * 100
-
-```
-
 ## Data sources
 
 ### Census Bureau
