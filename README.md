@@ -16,6 +16,8 @@ In this notebook, we download national ZCTA-level demographic data and geographi
 
 ACBJ developed a formula that considers a number of demographic and economic data points: per capita income, median home value, population per square mile and median age. We take these metrics and adjust for the land area of each ZIP code to determine the area's wealth per square mile. We then adjust each ZIP code's wealth score to account for regional differences in affordability. More expensive areas receive a lower score in this step.
 
+The full formula is available in the ghost article called "Wealthiest ZIPs methodology, 2026 (internal use only)"
+
 ## Data sources
 
 ### Census Bureau
