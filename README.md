@@ -26,7 +26,7 @@ Source: *Census Bureau's American Community Survey 2024 five-year estimates*
 
 ### Bureau of Economic Analysis
 
-Source: [*BEA's Regional Price Parities*] (https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area)
+Source: [*BEA's Regional Price Parities*](https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area)
 
 ## Project usage
 
