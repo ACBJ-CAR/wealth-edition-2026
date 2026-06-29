@@ -30,7 +30,9 @@ def _(mo):
 
     **Instructions**
 
-    To adjust filters for a local wealthiest ZIP code ranking, newsrooms can start by filtering by state and then by metro area and/or counties. Multiple selections are possible in each category.
+    To adjust filters for a local wealthiest ZIP code ranking, newsrooms can start by filtering by state and then by metro area and/or counties. Multiple selections are possible in each category. The tool works best if you filter by income/population first, then filter by geography.
+
+    By default, ZIP codes with poverty rates above 10% and those with per capita incomes below $80,000 are excluded. This aligns with our methodology for the nation's Wealthiest 1000 ZIP codes. If this baseline eliminates too many ZIP codes for your coverage area, please adjust these filters.
 
     Geographic definitions used in this dataset come from the Census Bureau or USPS and may not match local ACBJ coverage areas exactly.
 
@@ -102,11 +104,18 @@ def _(pd):
 
 @app.cell
 def _(mo):
-    min_income = mo.ui.number(label="Minimum median household income", start=0)
-    min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
-    min_pop = mo.ui.number(label="Minimum population", start=0)
-    min_pop_per_sqmi = mo.ui.number(label="Minimum population per sq. mi.", start=0)
-    return min_area, min_income, min_pop, min_pop_per_sqmi
+    min_income = mo.ui.number(label="Min. median household income", start=0)
+    min_area = mo.ui.number(label="Min. sq. mi", start=0)
+    min_pop = mo.ui.number(label="Min. population", start=0)
+    min_pop_per_sqmi = mo.ui.number(label="Min. population per sq. mi.", start=0)
+    min_per_capita_income = mo.ui.number(label="Min. per capita income", start=80000)
+    return (
+        min_area,
+        min_income,
+        min_per_capita_income,
+        min_pop,
+        min_pop_per_sqmi,
+    )
 
 
 @app.cell
@@ -138,15 +147,9 @@ def _(mo):
 
     firsts = [item[0] for item in poverty_options]
     max_poverty = mo.ui.dropdown(
-        label="Max poverty rate", options=firsts, value=firsts[2]
+        label="Max. poverty rate", options=firsts, value=firsts[2]
     )
     return (max_poverty,)
-
-
-@app.cell
-def _(max_poverty):
-    print(max_poverty.value)
-    return
 
 
 @app.cell
@@ -276,8 +279,25 @@ def _(city, d3):
 
 
 @app.cell
-def _(max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi, mo):
-    mo.hstack([min_income, min_area, min_pop, min_pop_per_sqmi, max_poverty])
+def _(min_area, min_income, min_pop, min_pop_per_sqmi, mo):
+    mo.hstack([min_income, min_area, min_pop, min_pop_per_sqmi])
+    return
+
+
+@app.cell
+def _(max_poverty, min_per_capita_income, mo):
+    mo.vstack(
+        [
+            mo.md(
+                "### Default filters. Adjust only if they eliminate too many ZIP codes."
+            ),
+            mo.hstack(
+                [min_per_capita_income, max_poverty],
+                align="center",
+                justify="start",
+            ),
+        ]
+    )
     return
 
 
