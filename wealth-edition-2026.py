@@ -26,13 +26,13 @@ def _(mo):
 
     Each ZIP code’s ranking considers per capita income, household income, population, land area, homeownership rates and poverty rates. ZIP codes missing any one of these data points are not included. ACBJ also applied a number of assumptions to factor home equity and estimated savings on a per capita basis.
 
-    The unfiltered, baseline dataset includes all U.S. ZIP codes. To account for local nuances in demographics and population, newsrooms can adjust data thresholds to offset some of the weighting applied to ACBJ’s ranking criteria. For example, ACBJ’s Wealthy 1000 — a national ranking of the wealthiest ZIP codes in America — thresholds were applied to filter the data to only include ZIP codes with at least 0.5 square miles in measure, a minimum per capita income of $80,000 and a maximum poverty rate of 10%. Since ACBJ’s ranking are weighted to determine concentrations of wealth, newsrooms with densely populated urban neighborhoods might want to consider adjusting local thresholds to reflect a lower poverty rate or higher minimum income levels. In areas where wealth is concentrated in more rural or suburban surroundings, setting thresholds with larger square mileage measures or higher median home values.
+    The unfiltered, baseline dataset includes all U.S. ZIP codes. To account for local nuances in demographics and population, newsrooms can adjust data thresholds to offset some of the weighting applied to ACBJ’s ranking criteria. For example, ACBJ’s Wealthy 1000 — a national ranking of the wealthiest ZIP codes in America — thresholds were applied to filter the data to only include ZIP codes with at least 0.5 square miles in measure, a minimum per capita income of $80,000 and a maximum poverty rate of 15%. Since ACBJ’s ranking are weighted to determine concentrations of wealth, newsrooms with densely populated urban neighborhoods might want to consider adjusting local thresholds to reflect a lower poverty rate or higher minimum income levels. In areas where wealth is concentrated in more rural or suburban surroundings, setting thresholds with larger square mileage measures or higher median home values.
 
     **Instructions**
 
     To adjust filters for a local wealthiest ZIP code ranking, newsrooms can start by filtering by state and then by metro area and/or counties. Multiple selections are possible in each category. The tool works best if you filter by income/population first, then filter by geography.
 
-    By default, ZIP codes with poverty rates above 10% and those with per capita incomes below $80,000 are excluded. This aligns with our methodology for the nation's Wealthiest 1000 ZIP codes. If this baseline eliminates too many ZIP codes for your coverage area, please adjust these filters.
+    By default, ZIP codes with poverty rates above 15% and those with per capita incomes below $80,000 are excluded. This aligns with our methodology for the nation's Wealthiest 1000 ZIP codes. *For most metro areas, these baseline metrics will be too high. You will likely need to lower the minimum per capita income, or increase the maximum poverty rate, or both*.
 
     Geographic definitions used in this dataset come from the Census Bureau or USPS and may not match local ACBJ coverage areas exactly.
 
@@ -54,7 +54,7 @@ def _(mo):
 
 
 @app.cell
-def _(pd):
+def _(pd, wealthy_1000):
     def load_data():
         return pd.read_csv(
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
@@ -99,6 +99,11 @@ def _(pd):
     df["_rank"] = df["concentrated_wealth_per_sq_mile_rpp_adjusted"].rank(
         ascending=False, method="min"
     )
+
+    df["Wealthiest 1000 rank"] = df["Zip code"].map(
+        wealthy_1000.set_index("ZIP")["Rank"]
+    )
+
     df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
     # df.insert(loc=3, column="County and state", value=df["County, state"])
     return (df,)
@@ -120,6 +125,12 @@ def _(mo):
         min_pop,
         min_pop_per_sqmi,
     )
+
+
+@app.cell
+def _(df):
+    df["Zip code"]
+    return
 
 
 @app.cell
@@ -157,7 +168,7 @@ def _(mo):
 
     firsts = [item[0] for item in poverty_options]
     max_poverty = mo.ui.dropdown(
-        label="Max. poverty rate", options=firsts, value=firsts[2]
+        label="Max. poverty rate", options=firsts, value=firsts[3]
     )
     return (max_poverty,)
 
@@ -287,7 +298,7 @@ def _(city, d3):
         d.insert(
             loc=0, column="Rank within selection", value=d["Rank_within_selection"]
         )
-        d.insert(loc=1, column="National rank", value=d["_rank"])
+        # d.insert(loc=1, column="National rank", value=d["_rank"])
 
         d = d.drop(columns="_rank")
         d = d.drop(columns="Rank_within_selection")
@@ -301,25 +312,14 @@ def _(city, d3):
 
 
 @app.cell
-def _(min_area, min_income, min_pop, min_pop_per_sqmi, mo):
-    mo.hstack([min_income, min_area, min_pop, min_pop_per_sqmi])
+def _(max_poverty, min_income, min_per_capita_income, mo):
+    mo.hstack([min_per_capita_income, max_poverty, min_income])
     return
 
 
 @app.cell
-def _(max_poverty, min_per_capita_income, mo):
-    mo.vstack(
-        [
-            mo.md(
-                "### Default filters. Adjust only if they eliminate too many ZIP codes."
-            ),
-            mo.hstack(
-                [min_per_capita_income, max_poverty],
-                align="center",
-                justify="start",
-            ),
-        ]
-    )
+def _(min_area, min_pop, min_pop_per_sqmi, mo):
+    mo.hstack([min_pop, min_area, min_pop_per_sqmi])
     return
 
 
@@ -389,8 +389,14 @@ def _(pd):
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
             dtype={"ZIP_CODE_TABULATION_AREA": "str"},
         )
-        .query("income_per_capita >= 80000 and poverty_rate <= .1")
+        .query("income_per_capita >= 80000 and poverty_rate <= .15")
         .nlargest(1000, "concentrated_wealth_per_sq_mile_rpp_adjusted")
+    )
+    unfiltered_df["Rank"] = unfiltered_df[
+        "concentrated_wealth_per_sq_mile_rpp_adjusted"
+    ].rank(
+        ascending=False,
+        method="min",
     )
     return (unfiltered_df,)
 
@@ -400,7 +406,7 @@ def _(mo):
     mo.md(r"""
     # Wealthy 1000
 
-    ACBJ’s Wealthy 1000 is a ranking of the wealthiest ZIP codes utilizing the data and methodology outlined above. The Wealthy 1000 applies three thresholds — a minimum square mile measure of 0.5 square miles per ZIP, a minimum per capita income of $80,000, and a maximum poverty rate of 10% — to determine its national rankings. To account for variances in cost of living per ZIP code, we adjusted each ZIP code's ranking based on its metro area [Regional Price Parity](https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area) as of the end of 2024.
+    ACBJ’s Wealthy 1000 is a ranking of the wealthiest ZIP codes utilizing the data and methodology outlined above. The Wealthy 1000 applies three thresholds — a minimum square mile measure of 0.5 square miles per ZIP, a minimum per capita income of $80,000, and a maximum poverty rate of 15% — to determine its national rankings. To account for variances in cost of living per ZIP code, we adjusted each ZIP code's ranking based on its metro area [Regional Price Parity](https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area) as of the end of 2024.
     """)
     return
 
@@ -456,6 +462,7 @@ def _(mo, unfiltered_df):
         },
         inplace=True,
     )
+    wealthy_1000["ZIP"] = wealthy_1000["ZIP"].astype("Int64").astype(str).str.zfill(5)
 
     table_ui_1000 = mo.ui.table(
         wealthy_1000.reset_index(drop=True),
@@ -473,6 +480,17 @@ def _(mo, unfiltered_df):
         page_size=20,
     )
     table_ui_1000
+    return (wealthy_1000,)
+
+
+@app.cell
+def _(wealthy_1000):
+    wealthy_1000.columns
+    return
+
+
+@app.cell
+def _():
     return
 
 
