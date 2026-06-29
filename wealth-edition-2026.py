@@ -39,7 +39,7 @@ def _(mo):
     You can find a [reader-friendly methodology you can use in stories here](https://www.bizjournals.com/bizjournals/news/2025/12/26/wealthiest-zips-methodology-2026.html).
     <div style="display: flex; gap: 5px">
         <img src = "https://media.bizj.us/view/img/12800587/mspbj-ethan-nelson.webp" style="width:80px;height:80px;">
-        <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson.</a> or your senior researcher</span>
+        <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson</a> or your senior researcher.</span>
     </div>
 
     <!-- <u>Baseline assumptions</u>: <br>
@@ -137,7 +137,9 @@ def _(mo):
     poverty_options = [(f"{v:.0%}", float(v)) for v in poverty_pcts]
 
     firsts = [item[0] for item in poverty_options]
-    max_poverty = mo.ui.dropdown(label="Max poverty", options=firsts, value=firsts[2])
+    max_poverty = mo.ui.dropdown(
+        label="Max poverty rate", options=firsts, value=firsts[2]
+    )
     return (max_poverty,)
 
 
@@ -352,7 +354,7 @@ def _(mo):
     mo.md(r"""
     # Wealthy 1000
 
-    ACBJ’s Wealthy 1000 is a ranking of the wealthiest ZIP codes utilizing the data and methodology outlined above. The Wealthy 1000 applies three thresholds — a minimum square mile measure of 0.5 square miles per ZIP, a minimum per capita income of $80,000, and a maximum poverty rate of 10% — to determine its national rankings. To account for variances in cost of living per ZIP code, we
+    ACBJ’s Wealthy 1000 is a ranking of the wealthiest ZIP codes utilizing the data and methodology outlined above. The Wealthy 1000 applies three thresholds — a minimum square mile measure of 0.5 square miles per ZIP, a minimum per capita income of $80,000, and a maximum poverty rate of 10% — to determine its national rankings. To account for variances in cost of living per ZIP code, we adjusted each ZIP code's ranking based on its metro area [Regional Price Parity](https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area) as of the end of 2024.
     """)
     return
 
