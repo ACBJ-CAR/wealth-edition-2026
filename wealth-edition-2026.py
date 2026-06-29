@@ -20,22 +20,26 @@ def _(mo):
     <h1>
         ACBJ's Wealth Edition
     </h1>
-    ### This page contains the data and scores for ACBJ's wealth edition. Data is from the American Community Survey 2024 5-year estimates.
+    ### This page contains the data and rankings for ACBJ's wealth edition. Data are from the American Community Survey 2024 5-year estimates and weighted to reflect a total wealth ranking per ZIP code.
 
-    Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. In addition, &nbsp;ACBJ's Research Division has made a number of assumptions to estimate total wealth in a ZIP code.
+    American City Business Journals’ &nbsp;Wealthiest ZIP Codes ranking uses publicly available data and a proprietary weighting to determine where wealth is most densely concentrated in America. The calculations factor population density, earnings, home ownership and poverty rates, among other measures.
 
-    The unfiltered, baseline dataset includes all ZIP codes. Depending on your market's economic situation, you may want to adjust the minimum per capita income, population, land area, or maximum poverty rate. The Wealthy 1000, which is a national look of the country's wealthiest ZIP codes according to our formula, is at the bottom of this page.
+    Each ZIP code’s ranking considers per capita income, household income, population, land area, homeownership rates and poverty rates. ZIP codes missing any one of these data points are not included. ACBJ also applied a number of assumptions to factor home equity and estimated savings on a per capita basis.
+
+    The unfiltered, baseline dataset includes all U.S. ZIP codes. To account for local nuances in demographics and population, newsrooms can adjust data thresholds to offset some of the weighting applied to ACBJ’s ranking criteria. For example, ACBJ’s Wealthy 1000 — a national ranking of the wealthiest ZIP codes in America — thresholds were applied to filter the data to only include ZIP codes with at least 0.5 square miles in measure, a minimum per capita income of $80,000 and a maximum poverty rate of 10%. Since ACBJ’s ranking are weighted to determine concentrations of wealth, newsrooms with densely populated urban neighborhoods might want to consider adjusting local thresholds to reflect a lower poverty rate or higher minimum income levels. In areas where wealth is concentrated in more rural or suburban surroundings, setting thresholds with larger square mileage measures or higher median home values.
 
     **Instructions**
 
-    Start by selecting the states you want, then narrow to your metro area and/or counties. The geographic defintions used in this dataset come from the Census Bureau or USPS, so they may not match your coverage area exactly. Be aware the filter logic goes from largest to smallest, so if you select a city first, you may produce unexpected results.
+    To adjust filters for a local wealthiest ZIP code ranking, newsrooms can start by filtering by state and then by metro area and/or counties. Multiple selections are possible in each category.
 
-    Once you've selected your relevant areas, take a look at the table it produces. In most cases, you'll be ready to click the download button without any additional filtering. In some markets, particularly in those with large or small ZIP codes, or with ones with great income diversity, you may need to set a minimum for income, land area or population. Enter in minimums until the results look acceptable to you.
+    Geographic definitions used in this dataset come from the Census Bureau or USPS and may not match local ACBJ coverage areas exactly.
+
+    Once you've filtered by geography, review the table results to verify your data. In most cases, you'll be ready to click the download button without any additional filtering. Otherwise, refresh the page and adjust your demographic filters accordingly, or reach out to Ethan Nelson or your senior researcher to schedule time to sift and sort the data to local preferences.
 
     You can find a [reader-friendly methodology you can use in stories here](https://www.bizjournals.com/bizjournals/news/2025/12/26/wealthiest-zips-methodology-2026.html).
     <div style="display: flex; gap: 5px">
         <img src = "https://media.bizj.us/view/img/12800587/mspbj-ethan-nelson.webp" style="width:80px;height:80px;">
-        <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson.</a></span>
+        <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson.</a> or your senior researcher</span>
     </div>
 
     <!-- <u>Baseline assumptions</u>: <br>
@@ -58,6 +62,7 @@ def _(pd):
                 not in [
                     "concentrated_wealth_per_sq_mile",
                     "concentrated_wealth_per_sq_mile_difference",
+                    "ALAND20",
                 ]
             ),
         )
@@ -77,7 +82,6 @@ def _(pd):
             "median_home_value": "Median home value",
             "median_household_income": "Median household income",
             "poverty_rate": "Poverty rate",
-            "ALAND20": "Land area (sq. meters)",
             "median_age": "Median age",
             "square_miles": "Sq. mi.",
             "home_ownership_rate": "Homeownership rate",
@@ -102,8 +106,45 @@ def _(mo):
     min_area = mo.ui.number(label="Minimum ZIP code sq. mi", start=0)
     min_pop = mo.ui.number(label="Minimum population", start=0)
     min_pop_per_sqmi = mo.ui.number(label="Minimum population per sq. mi.", start=0)
-    max_poverty = mo.ui.number(label="Maximum poverty rate", stop=100)
-    return max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi
+    return min_area, min_income, min_pop, min_pop_per_sqmi
+
+
+@app.cell
+def _(mo):
+    poverty_pcts = [
+        0,
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.25,
+        0.3,
+        0.35,
+        0.4,
+        0.45,
+        0.5,
+        0.55,
+        0.6,
+        0.65,
+        0.7,
+        0.75,
+        0.8,
+        0.85,
+        0.9,
+        0.95,
+        1,
+    ]
+    poverty_options = [(f"{v:.0%}", float(v)) for v in poverty_pcts]
+
+    firsts = [item[0] for item in poverty_options]
+    max_poverty = mo.ui.dropdown(label="Max poverty", options=firsts, value=firsts[2])
+    return (max_poverty,)
+
+
+@app.cell
+def _(max_poverty):
+    print(max_poverty.value)
+    return
 
 
 @app.cell
@@ -117,7 +158,10 @@ def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
         ]
         d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
         d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
-        d = d[d["Poverty rate"].notna() & (d["Poverty rate"] <= max_poverty.value)]
+        d = d[
+            d["Poverty rate"].notna()
+            & (d["Poverty rate"] <= float(max_poverty.value.rstrip("%")) / 100)
+        ]
         d = d[
             d["Population per sq. mi."].notna()
             & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
@@ -213,7 +257,6 @@ def _(city, d3):
         d = d3.copy()
 
         d = d.assign(**{"Rank_within_selection": lambda d: d._rank.rank(method="min")})
-
         d.insert(
             loc=0, column="Rank within selection", value=d["Rank_within_selection"]
         )
@@ -272,10 +315,10 @@ def _(filter_df, mo):
         show_data_types=False,
         format_mapping={
             "Total population": "{:,}".format,
-            "Population per sq. mi.": "{:,.2f}".format,
-            "Per capita income": "${:,.2f}".format,
-            "Median household income": "${:,.2f}".format,
-            "Median home value": "${:,.2f}".format,
+            "Population per sq. mi.": "{:,.0f}".format,
+            "Per capita income": "${:,.0f}".format,
+            "Median household income": "${:,.0f}".format,
+            "Median home value": "${:,.0f}".format,
             "Poverty rate": "{:.2%}".format,
             "Homeownership rate": "{:.2%}".format,
             "Sq. mi.": "{:,.2f}".format,
@@ -309,7 +352,7 @@ def _(mo):
     mo.md(r"""
     # Wealthy 1000
 
-    These are the nation's 1000 wealthiest ZIP code areas using our ranking. Each ZIP code has been ranked based on a formula that considers per capita income, population, land area, homeownership rate, and poverty rate to determine how much wealth an area has. ZIP codes that are missing any one of these data points are not included. ACBJ's Research Division has made a number of assumptions to estimate total wealth in a ZIP code. Like in the above, we're only including areas that are at least 0.5 sq. mi.
+    ACBJ’s Wealthy 1000 is a ranking of the wealthiest ZIP codes utilizing the data and methodology outlined above. The Wealthy 1000 applies three thresholds — a minimum square mile measure of 0.5 square miles per ZIP, a minimum per capita income of $80,000, and a maximum poverty rate of 10% — to determine its national rankings. To account for variances in cost of living per ZIP code, we
     """)
     return
 
