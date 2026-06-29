@@ -65,6 +65,7 @@ def _(pd):
                     "concentrated_wealth_per_sq_mile",
                     "concentrated_wealth_per_sq_mile_difference",
                     "ALAND20",
+                    "COUNTYNAME",
                 ]
             ),
         )
@@ -94,11 +95,12 @@ def _(pd):
 
     df["State"] = df["State"].fillna("NA")
     df["Metro area"] = df["Metro area"].fillna("Not in metro area or metro not found")
-    df["County"] = df["County"].fillna("County not found")
+    # df["County"] = df["County"].fillna("County not found")
     df["_rank"] = df["concentrated_wealth_per_sq_mile_rpp_adjusted"].rank(
         ascending=False, method="min"
     )
     df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
+    # df.insert(loc=3, column="County and state", value=df["County, state"])
     return (df,)
 
 
@@ -108,7 +110,9 @@ def _(mo):
     min_area = mo.ui.number(label="Min. sq. mi", start=0)
     min_pop = mo.ui.number(label="Min. population", start=0)
     min_pop_per_sqmi = mo.ui.number(label="Min. population per sq. mi.", start=0)
-    min_per_capita_income = mo.ui.number(label="Min. per capita income", start=80000)
+    min_per_capita_income = mo.ui.number(
+        label="Min. per capita income", start=0, value=80000
+    )
     return (
         min_area,
         min_income,
@@ -116,6 +120,12 @@ def _(mo):
         min_pop,
         min_pop_per_sqmi,
     )
+
+
+@app.cell
+def _():
+    # tofix: changing geography removes demographic filters
+    return
 
 
 @app.cell
@@ -153,7 +163,15 @@ def _(mo):
 
 
 @app.cell
-def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
+def _(
+    df,
+    max_poverty,
+    min_area,
+    min_income,
+    min_per_capita_income,
+    min_pop,
+    min_pop_per_sqmi,
+):
     def base_filtered(df):
 
         d = df.copy()
@@ -170,6 +188,10 @@ def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
         d = d[
             d["Population per sq. mi."].notna()
             & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
+        ]
+        d = d[
+            d["Per capita income"].notna()
+            & (d["Per capita income"] >= min_per_capita_income.value)
         ]
 
         return d
@@ -220,7 +242,7 @@ def _(d0, mo, np, prev_state, state):
 def _(d1, metro, mo, np):
     d2 = d1[d1["Metro area"].isin(metro.value)] if metro.value else d1
 
-    counties = np.sort(d2["County"].dropna().unique())
+    counties = np.sort(d2["County, state"].dropna().unique())
 
     prev_county = (
         [s for s in locals().get("county", []).value if s in counties]
@@ -238,7 +260,7 @@ def _(d1, metro, mo, np):
 
 @app.cell
 def _(county, d2, mo, np):
-    d3 = d2[d2["County"].isin(county.value)] if county.value else d2
+    d3 = d2[d2["County, state"].isin(county.value)] if county.value else d2
 
     cities = np.sort(d3["City"].astype(str).unique())
 
@@ -362,10 +384,14 @@ def _():
 
 @app.cell
 def _(pd):
-    unfiltered_df = pd.read_csv(
-        "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
-        dtype={"ZIP_CODE_TABULATION_AREA": "str"},
-    ).nlargest(1000, "concentrated_wealth_per_sq_mile_rpp_adjusted")
+    unfiltered_df = (
+        pd.read_csv(
+            "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
+            dtype={"ZIP_CODE_TABULATION_AREA": "str"},
+        )
+        .query("income_per_capita >= 80000 and poverty_rate <= .1")
+        .nlargest(1000, "concentrated_wealth_per_sq_mile_rpp_adjusted")
+    )
     return (unfiltered_df,)
 
 
