@@ -32,11 +32,12 @@ def _(mo):
 
     Once you've selected your relevant areas, take a look at the table it produces. In most cases, you'll be ready to click the download button without any additional filtering. In some markets, particularly in those with large or small ZIP codes, or with ones with great income diversity, you may need to set a minimum for income, land area or population. Enter in minimums until the results look acceptable to you.
 
-    You can find our full methodology here (internal only), and a reader-friendly methodology you can link to in stories here. Links TKTK
+    You can find a [reader-friendly methodology you can use in stories here](https://www.bizjournals.com/bizjournals/news/2025/12/26/wealthiest-zips-methodology-2026.html).
     <div style="display: flex; gap: 5px">
         <img src = "https://media.bizj.us/view/img/12800587/mspbj-ethan-nelson.webp" style="width:80px;height:80px;">
         <span style="float: right; padding: 10px; background-color: #fff; padding-top: 6%; font-size: large"> Questions? Reach out to <a href="mailto:enelson@bizjournals.com?&subject=Wealth%20Edition%20Question"> Ethan Nelson.</a></span>
     </div>
+
     <!-- <u>Baseline assumptions</u>: <br>
     Age savings start: **25**<br>
     Average lifetime savings rate: **10%** (0.1)<br>
@@ -73,6 +74,7 @@ def _(pd):
             "total_population": "Total population",
             "population_per_sq_mile": "Population per sq. mi.",
             "income_per_capita": "Per capita income",
+            "median_home_value": "Median home value",
             "median_household_income": "Median household income",
             "poverty_rate": "Poverty rate",
             "ALAND20": "Land area (sq. meters)",
@@ -88,7 +90,7 @@ def _(pd):
     df["Metro area"] = df["Metro area"].fillna("Not in metro area or metro not found")
     df["County"] = df["County"].fillna("County not found")
     df["_rank"] = df["concentrated_wealth_per_sq_mile_rpp_adjusted"].rank(
-        ascending=False
+        ascending=False, method="min"
     )
     df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
     return (df,)
@@ -110,8 +112,8 @@ def _(df, max_poverty, min_area, min_income, min_pop, min_pop_per_sqmi):
 
         d = df.copy()
         d = d[
-            d["Per capita income"].notna()
-            & (d["Per capita income"] >= min_income.value)
+            d["Median household income"].notna()
+            & (d["Median household income"] >= min_income.value)
         ]
         d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
         d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
@@ -210,7 +212,7 @@ def _(city, d3):
     def filter_df():
         d = d3.copy()
 
-        d = d.assign(**{"Rank_within_selection": lambda d: range(1, len(d) + 1)})
+        d = d.assign(**{"Rank_within_selection": lambda d: d._rank.rank(method="min")})
 
         d.insert(
             loc=0, column="Rank within selection", value=d["Rank_within_selection"]
@@ -249,7 +251,7 @@ def _(BytesIO, filter_df, mo, pd):
         buffer.seek(0)
         return buffer
 
-    filtered = filter_df()  # your function
+    filtered = filter_df()
 
     excel_bytes = make_excel_bytes(filtered)
 
@@ -273,11 +275,13 @@ def _(filter_df, mo):
             "Population per sq. mi.": "{:,.2f}".format,
             "Per capita income": "${:,.2f}".format,
             "Median household income": "${:,.2f}".format,
+            "Median home value": "${:,.2f}".format,
             "Poverty rate": "{:.2%}".format,
             "Homeownership rate": "{:.2%}".format,
             "Sq. mi.": "{:,.2f}".format,
         },
         freeze_columns_left=["Zip code"],
+        page_size=20,
     )
 
     table_ui
@@ -350,6 +354,7 @@ def _(mo, unfiltered_df):
             "total_population": "Total population",
             "population_per_sq_mile": "Population per sq. mi.",
             "income_per_capita": "Per capita income",
+            "median_home_value": "Median home value",
             "median_household_income": "Median household income",
             "poverty_rate": "Poverty rate",
             "ALAND20": "Land area (sq. meters)",
@@ -374,13 +379,9 @@ def _(mo, unfiltered_df):
             "Sq. mi.": "{:,.2f}".format,
         },
         freeze_columns_left=["ZIP"],
+        page_size=20,
     )
     table_ui_1000
-    return
-
-
-@app.cell
-def _():
     return
 
 
