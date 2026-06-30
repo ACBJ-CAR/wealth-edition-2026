@@ -173,18 +173,129 @@ def _(mo):
 
 
 @app.cell
+def _():
+    # def base_filtered(df):
+
+    #     d = df.copy()
+    #     d = d[
+    #         d["Median household income"].notna()
+    #         & (d["Median household income"] >= min_income.value)
+    #     ]
+    #     d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
+    #     d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
+    #     d = d[
+    #         d["Poverty rate"].notna()
+    #         & (d["Poverty rate"] <= float(max_poverty.value.rstrip("%")) / 100)
+    #     ]
+    #     d = d[
+    #         d["Population per sq. mi."].notna()
+    #         & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
+    #     ]
+    #     d = d[
+    #         d["Per capita income"].notna()
+    #         & (d["Per capita income"] >= min_per_capita_income.value)
+    #     ]
+
+    #     return d
+
+    # d0 = base_filtered(df)
+    return
+
+
+@app.cell
+def _(df, mo, np):
+    states = np.sort(df["State"].dropna().unique())
+
+    state = (
+        [s for s in locals().get("state", []).value if s in states]
+        if "state" in locals()
+        else []
+    )
+
+    state = mo.ui.multiselect(
+        options=states,
+        label="State:",
+        value=[s for s in state if s in states] if "state" in locals() else [],
+    )
+    return (state,)
+
+
+@app.cell
+def _(df, mo, np, state):
+    d1 = df[df["State"].isin(state.value)] if state.value else df
+
+    metros = np.sort(d1["Metro area"].dropna().unique())
+
+    prev_metro = (
+        [s for s in locals().get("metro", []).value if s in metros]
+        if "metro" in locals()
+        else []
+    )
+
+    metro = mo.ui.multiselect(
+        options=metros,
+        label="Metro:",
+        value=[s for s in prev_metro if s in metros] if "metro" in locals() else [],
+    )
+    return d1, metro
+
+
+@app.cell
+def _(d1, metro, mo, np):
+    d2 = d1[d1["Metro area"].isin(metro.value)] if metro.value else d1
+
+    counties = np.sort(d2["County, state"].dropna().unique())
+
+    prev_county = (
+        [s for s in locals().get("county", []).value if s in counties]
+        if "county" in locals()
+        else []
+    )
+
+    county = mo.ui.multiselect(
+        options=counties,
+        label="County:",
+        value=[s for s in prev_county if s in counties] if "county" in locals() else [],
+    )
+    return county, d2
+
+
+@app.cell
+def _(county, d2, mo, np):
+    d3 = d2[d2["County, state"].isin(county.value)] if county.value else d2
+
+    cities = np.sort(d3["City"].astype(str).unique())
+
+    prev_city = (
+        [s for s in locals().get("city", []).value if s in cities]
+        if "city" in locals()
+        else []
+    )
+
+    city = mo.ui.multiselect(
+        options=cities,
+        label="City:",
+        value=[s for s in prev_city if s in cities] if "city" in locals() else [],
+    )
+    return city, d3
+
+
+@app.cell
 def _(
-    df,
+    city,
+    county,
     max_poverty,
+    metro,
     min_area,
     min_income,
     min_per_capita_income,
     min_pop,
     min_pop_per_sqmi,
+    state,
 ):
-    def base_filtered(df):
+    def filter_df(d):
+        # d = d3.copy()
 
-        d = df.copy()
         d = d[
             d["Median household income"].notna()
             & (d["Median household income"] >= min_income.value)
@@ -204,106 +315,18 @@ def _(
             & (d["Per capita income"] >= min_per_capita_income.value)
         ]
 
-        return d
-
-    d0 = base_filtered(df)
-    return (d0,)
-
-
-@app.cell
-def _(d0, mo, np):
-    states = np.sort(d0["State"].dropna().unique())
-
-    prev_state = (
-        [s for s in locals().get("state", []).value if s in states]
-        if "state" in locals()
-        else []
-    )
-
-    state = mo.ui.multiselect(
-        label="Select states:",
-        options=states,
-        value=prev_state,
-    )
-    return (state,)
-
-
-@app.cell
-def _(d0, mo, np, state):
-    d1 = d0[d0["State"].isin(state.value)] if state.value else d0
-
-    metros = np.sort(d1["Metro area"].dropna().unique())
-
-    prev_metro = (
-        [s for s in locals().get("metro", []).value if s in metros]
-        if "metro" in locals()
-        else []
-    )
-
-    metro = mo.ui.multiselect(
-        label="Select metros:",
-        options=metros,
-        value=prev_metro,
-    )
-    return d1, metro
-
-
-@app.cell
-def _(d1, metro, mo, np):
-    d2 = d1[d1["Metro area"].isin(metro.value)] if metro.value else d1
-
-    counties = np.sort(d2["County, state"].dropna().unique())
-
-    prev_county = (
-        [s for s in locals().get("county", []).value if s in counties]
-        if "county" in locals()
-        else []
-    )
-
-    county = mo.ui.multiselect(
-        label="Select counties:",
-        options=counties,
-        value=prev_county,
-    )
-    return county, d2
-
-
-@app.cell
-def _(county, d2, mo, np):
-    d3 = d2[d2["County, state"].isin(county.value)] if county.value else d2
-
-    cities = np.sort(d3["City"].astype(str).unique())
-
-    prev_city = (
-        [s for s in locals().get("city", []).value if s in cities]
-        if "city" in locals()
-        else []
-    )
-
-    city = mo.ui.multiselect(
-        label="Select cities:",
-        options=cities,
-        value=prev_city,
-    )
-    return city, d3
-
-
-@app.cell
-def _(city, d3):
-    def filter_df():
-        d = d3.copy()
-
-        d = d.assign(**{"Rank_within_selection": lambda d: d._rank.rank(method="min")})
-        d.insert(loc=0, column="Rank within filter", value=d["Rank_within_selection"])
-        d.insert(loc=2, column="Nationwide rank", value=d["_rank"])
-
-        d = d.drop(columns="_rank")
-        d = d.drop(columns="Rank_within_selection")
-
+        if state.value:
+            d = d[d["State"].isin(state.value)]
+        if metro.value:
+            d = d[d["Metro area"].isin(metro.value)]
+        if county.value:
+            d = d[d["County, state"].isin(county.value)]
         if city.value:
             d = d[d["City"].isin(city.value)]
-        else:
-            return d
+        d = d.assign(Rank_within_selection=lambda x: x["_rank"].rank(method="min"))
+        d.insert(0, "Rank within filtered selection", d["Rank_within_selection"])
+        d.insert(2, "Nationwide rank", d["_rank"])
+        return d.drop(columns=["_rank", "Rank_within_selection"])
 
     return (filter_df,)
 
@@ -327,7 +350,7 @@ def _(city, county, metro, mo, state):
 
 
 @app.cell
-def _(BytesIO, filter_df, mo, pd):
+def _(BytesIO, df, filter_df, mo, pd):
     def make_excel_bytes(df):
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -335,7 +358,7 @@ def _(BytesIO, filter_df, mo, pd):
         buffer.seek(0)
         return buffer
 
-    filtered = filter_df()
+    filtered = filter_df(df)
 
     excel_bytes = make_excel_bytes(filtered)
 
@@ -350,10 +373,10 @@ def _(BytesIO, filter_df, mo, pd):
 
 
 @app.cell
-def _(filter_df, mo):
+def _(d3, filter_df, mo):
     table_ui = mo.ui.table(
         # df.fillna("-"),
-        filter_df().reset_index(drop=True),
+        filter_df(d3).reset_index(drop=True),
         show_data_types=False,
         format_mapping={
             "Total population": "{:,}".format,
