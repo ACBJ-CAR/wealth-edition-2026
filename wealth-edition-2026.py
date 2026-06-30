@@ -128,12 +128,6 @@ def _(mo):
 
 
 @app.cell
-def _(df):
-    df["Zip code"]
-    return
-
-
-@app.cell
 def _():
     # tofix: changing geography removes demographic filters
     return
