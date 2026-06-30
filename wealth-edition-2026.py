@@ -368,7 +368,7 @@ def _(filter_df, mo):
         freeze_columns_left=["Zip code"],
         page_size=20,
         # wrapped_columns=["Rank within filter"],
-        column_widths={"Rank within filter": 125},
+        # column_widths={"Rank within filter": 125},
     )
 
     mo.vstack(
