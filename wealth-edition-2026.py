@@ -212,11 +212,12 @@ def _(d1, metro, mo, np):
 
 
 @app.cell
-def _(county, d2, mo):
+def _(county, d2, mo, pd):
     d3 = d2[d2["County, state"].isin(county.value)] if county.value else d2
 
-    cities = sorted(d3["City"].dropna().astype(str).unique())
-
+    cities = pd.DataFrame(
+        sorted(d3["City"].dropna().astype(str).unique()), columns=["City"]
+    )
     prev_city = (
         [s for s in locals().get("city", []).value if s in cities]
         if "city" in locals()
@@ -251,10 +252,12 @@ def _(
             d_rank["Median household income"].notna()
             & (d_rank["Median household income"] >= min_income.value)
         ]
-        d_rank = d_rank[d_rank["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
+        d_rank = d_rank[
+            d_rank["Sq. mi."].notna() & (d_rank["Sq. mi."] >= min_area.value)
+        ]
         d_rank = d_rank[
             d_rank["Total population"].notna()
-            & (d["Total population"] >= min_pop.value)
+            & (d_rank["Total population"] >= min_pop.value)
         ]
         d_rank = d_rank[
             d_rank["Poverty rate"].notna()
@@ -292,6 +295,11 @@ def _(
         return final.drop(columns=["_rank", "Rank_within_selection", "Nationwide"])
 
     return (filter_df,)
+
+
+@app.cell
+def _():
+    return
 
 
 @app.cell
