@@ -261,10 +261,10 @@ def _(d1, metro, mo, np):
 
 
 @app.cell
-def _(county, d2, mo, np):
+def _(county, d2, mo):
     d3 = d2[d2["County, state"].isin(county.value)] if county.value else d2
 
-    cities = np.sort(d3["City"].astype(str).unique())
+    cities = sorted(d3["City"].dropna().astype(str).unique())
 
     prev_city = (
         [s for s in locals().get("city", []).value if s in cities]
