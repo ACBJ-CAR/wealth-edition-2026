@@ -109,7 +109,7 @@ def _(pd):
     #     .replace({np.nan: "-"}),
     # )
 
-    df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
+    # df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
     # df.insert(loc=3, column="County and state", value=df["County, state"])
     return (df,)
 
@@ -338,7 +338,7 @@ def _(
         )
         final.insert(1, "Nationwide rank", final["Nationwide"])
         final = final.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
-        return final.drop(columns=["_rank", "Rank_within_selection"])
+        return final.drop(columns=["_rank", "Rank_within_selection", "Nationwide"])
 
     return (filter_df,)
 
@@ -509,6 +509,7 @@ def _(mo, unfiltered_df):
         inplace=True,
     )
     wealthy_1000["ZIP"] = wealthy_1000["ZIP"].astype("Int64").astype(str).str.zfill(5)
+    wealthy_1000.drop(columns=["_rank"], inplace=True)
 
     table_ui_1000 = mo.ui.table(
         wealthy_1000.reset_index(drop=True),
