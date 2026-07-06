@@ -9,9 +9,8 @@ def _():
     import marimo as mo
     import pandas as pd
     import numpy as np
-    from io import BytesIO
 
-    return BytesIO, mo, np, pd
+    return mo, np, pd
 
 
 @app.cell
@@ -99,18 +98,6 @@ def _(pd):
     df["_rank"] = df["concentrated_wealth_per_sq_mile_rpp_adjusted"].rank(
         ascending=False, method="min"
     )
-
-    # df.insert(
-    #     loc=1,
-    #     column="Wealthiest 1000 rank",
-    #     value=df["Zip code"]
-    #     .map(wealthy_1000.set_index("ZIP")["Rank"])
-    #     .astype(object)
-    #     .replace({np.nan: "-"}),
-    # )
-
-    # df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
-    # df.insert(loc=3, column="County and state", value=df["County, state"])
     return (df,)
 
 
@@ -130,12 +117,6 @@ def _(mo):
         min_pop,
         min_pop_per_sqmi,
     )
-
-
-@app.cell
-def _():
-    # tofix: changing geography removes demographic filters
-    return
 
 
 @app.cell
@@ -170,36 +151,6 @@ def _(mo):
         label="Max. poverty rate", options=firsts, value=firsts[2]
     )
     return (max_poverty,)
-
-
-@app.cell
-def _():
-    # def base_filtered(df):
-
-    #     d = df.copy()
-    #     d = d[
-    #         d["Median household income"].notna()
-    #         & (d["Median household income"] >= min_income.value)
-    #     ]
-    #     d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
-    #     d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
-    #     d = d[
-    #         d["Poverty rate"].notna()
-    #         & (d["Poverty rate"] <= float(max_poverty.value.rstrip("%")) / 100)
-    #     ]
-    #     d = d[
-    #         d["Population per sq. mi."].notna()
-    #         & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
-    #     ]
-    #     d = d[
-    #         d["Per capita income"].notna()
-    #         & (d["Per capita income"] >= min_per_capita_income.value)
-    #     ]
-
-    #     return d
-
-    # d0 = base_filtered(df)
-    return
 
 
 @app.cell
@@ -362,31 +313,22 @@ def _(city, county, metro, mo, state):
 
 
 @app.cell
-def _(BytesIO, df, filter_df, mo, pd):
-    def make_excel_bytes(df):
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Data")
-        buffer.seek(0)
-        return buffer
-
-    filtered = filter_df(df)
-
-    excel_bytes = make_excel_bytes(filtered)
+def _(df, filter_df, mo):
+    filtered = filter_df(df).to_csv(index=False)
 
     download_btn = mo.download(
-        data=excel_bytes,
-        filename="Wealthiest ZIPs.xlsx",
+        data=filtered,
+        filename="Wealthiest ZIPs.csv",
         label="Download your filtered data",
     )
 
     download_btn
-    return (make_excel_bytes,)
+    return
 
 
 @app.cell
 def _(df, filter_df, mo):
-    table_ui = mo.ui.table(
+    market_wealthiest_zips = mo.ui.table(
         # df.fillna("-"),
         filter_df(df).reset_index(drop=True),
         show_data_types=False,
@@ -409,7 +351,7 @@ def _(df, filter_df, mo):
     mo.vstack(
         [
             mo.md("See table notes below."),
-            table_ui,
+            market_wealthiest_zips,
             mo.md("""
         - Rank within filter: This is where each ZIP code ranks only after taking into account your filters. It compares each ZIP code's wealth score against the universe of ZIP codes that meet your filter criteria.
         - Nationwide rank: This is the ZIP code's rank compared to all other ZIPs nationwide, with no geographic filters.
@@ -458,19 +400,11 @@ def _(mo):
 
 
 @app.cell
-def _(BytesIO, make_excel_bytes, mo, pd, unfiltered_df):
-    def make_excel_bytes_1000(df):
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Data")
-        buffer.seek(0)
-        return buffer
-
-    excel_bytes_1000 = make_excel_bytes(unfiltered_df)
-
+def _(mo, unfiltered_df):
+    wealthiest_100_download = unfiltered_df.to_csv(index=False)
     download_btn_1000 = mo.download(
-        data=excel_bytes_1000,
-        filename="Wealthiest ZIPs.xlsx",
+        data=wealthiest_100_download,
+        filename="Wealthiest 1000 ZIPs.csv",
         label="Download the Wealthy 1000",
     )
 
