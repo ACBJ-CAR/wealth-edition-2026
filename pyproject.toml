@@ -24,7 +24,11 @@ dependencies = [
     "marimo>=0.23.11",
     "ell-ai>=0.0.17",
     "tabulate>=0.10.0",
+    "acbj",
 ]
 
 [tool.jupytext]
 formats = "ipynb,py:percent"
+
+[tool.uv.sources]
+acbj = { git = "ssh://git@github.com/ACBJ-CAR/acbj.git" }

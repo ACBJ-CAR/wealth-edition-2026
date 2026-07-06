@@ -15,6 +15,13 @@ def _():
 
 
 @app.cell
+def _():
+    # for market in markets.MARKETS:
+    #     print market
+    return
+
+
+@app.cell
 def _(mo):
     mo.md(r"""
     <h1>
@@ -167,7 +174,7 @@ def _(mo):
 
     firsts = [item[0] for item in poverty_options]
     max_poverty = mo.ui.dropdown(
-        label="Max. poverty rate", options=firsts, value=firsts[3]
+        label="Max. poverty rate", options=firsts, value=firsts[2]
     )
     return (max_poverty,)
 
