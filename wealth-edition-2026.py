@@ -54,7 +54,7 @@ def _(mo):
 
 
 @app.cell
-def _(np, pd, wealthy_1000):
+def _(pd):
     def load_data():
         return pd.read_csv(
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
@@ -100,14 +100,14 @@ def _(np, pd, wealthy_1000):
         ascending=False, method="min"
     )
 
-    df.insert(
-        loc=1,
-        column="Wealthiest 1000 rank",
-        value=df["Zip code"]
-        .map(wealthy_1000.set_index("ZIP")["Rank"])
-        .astype(object)
-        .replace({np.nan: "-"}),
-    )
+    # df.insert(
+    #     loc=1,
+    #     column="Wealthiest 1000 rank",
+    #     value=df["Zip code"]
+    #     .map(wealthy_1000.set_index("ZIP")["Rank"])
+    #     .astype(object)
+    #     .replace({np.nan: "-"}),
+    # )
 
     df = df.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
     # df.insert(loc=3, column="County and state", value=df["County, state"])
@@ -117,7 +117,7 @@ def _(np, pd, wealthy_1000):
 @app.cell
 def _(mo):
     min_income = mo.ui.number(label="Min. median household income", start=0)
-    min_area = mo.ui.number(label="Min. sq. mi", start=0)
+    min_area = mo.ui.number(label="Min. sq. mi", start=0, step=0.5)
     min_pop = mo.ui.number(label="Min. population", start=0)
     min_pop_per_sqmi = mo.ui.number(label="Min. population per sq. mi.", start=0)
     min_per_capita_income = mo.ui.number(
@@ -277,7 +277,7 @@ def _(county, d2, mo, np):
         label="City:",
         value=[s for s in prev_city if s in cities] if "city" in locals() else [],
     )
-    return city, d3
+    return (city,)
 
 
 @app.cell
@@ -294,39 +294,51 @@ def _(
     state,
 ):
     def filter_df(d):
-        # d = d3.copy()
+        d_rank = d.copy()
 
-        d = d[
-            d["Median household income"].notna()
-            & (d["Median household income"] >= min_income.value)
+        d_rank = d_rank[
+            d_rank["Median household income"].notna()
+            & (d_rank["Median household income"] >= min_income.value)
         ]
-        d = d[d["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
-        d = d[d["Total population"].notna() & (d["Total population"] >= min_pop.value)]
-        d = d[
-            d["Poverty rate"].notna()
-            & (d["Poverty rate"] <= float(max_poverty.value.rstrip("%")) / 100)
+        d_rank = d_rank[d_rank["Sq. mi."].notna() & (d["Sq. mi."] >= min_area.value)]
+        d_rank = d_rank[
+            d_rank["Total population"].notna()
+            & (d["Total population"] >= min_pop.value)
         ]
-        d = d[
-            d["Population per sq. mi."].notna()
-            & (d["Population per sq. mi."] >= min_pop_per_sqmi.value)
+        d_rank = d_rank[
+            d_rank["Poverty rate"].notna()
+            & (d_rank["Poverty rate"] <= float(max_poverty.value.rstrip("%")) / 100)
         ]
-        d = d[
-            d["Per capita income"].notna()
-            & (d["Per capita income"] >= min_per_capita_income.value)
+        d_rank = d_rank[
+            d_rank["Population per sq. mi."].notna()
+            & (d_rank["Population per sq. mi."] >= min_pop_per_sqmi.value)
         ]
+        d_rank = d_rank[
+            d_rank["Per capita income"].notna()
+            & (d_rank["Per capita income"] >= min_per_capita_income.value)
+        ]
+
+        d_rank = d_rank.assign(Nationwide=lambda x: x["_rank"].rank(method="min"))
+
+        final = d_rank.copy()
 
         if state.value:
-            d = d[d["State"].isin(state.value)]
+            final = final[final["State"].isin(state.value)]
         if metro.value:
-            d = d[d["Metro area"].isin(metro.value)]
+            final = final[final["Metro area"].isin(metro.value)]
         if county.value:
-            d = d[d["County, state"].isin(county.value)]
+            final = final[final["County, state"].isin(county.value)]
         if city.value:
-            d = d[d["City"].isin(city.value)]
-        d = d.assign(Rank_within_selection=lambda x: x["_rank"].rank(method="min"))
-        d.insert(0, "Rank within filtered selection", d["Rank_within_selection"])
-        d.insert(2, "Nationwide rank", d["_rank"])
-        return d.drop(columns=["_rank", "Rank_within_selection"])
+            final = final[final["City"].isin(city.value)]
+        final = final.assign(
+            Rank_within_selection=lambda x: x["_rank"].rank(method="min")
+        )
+        final.insert(
+            0, "Rank within filtered selection", final["Rank_within_selection"]
+        )
+        final.insert(1, "Nationwide rank", final["Nationwide"])
+        final = final.drop(columns="concentrated_wealth_per_sq_mile_rpp_adjusted")
+        return final.drop(columns=["_rank", "Rank_within_selection"])
 
     return (filter_df,)
 
@@ -373,10 +385,10 @@ def _(BytesIO, df, filter_df, mo, pd):
 
 
 @app.cell
-def _(d3, filter_df, mo):
+def _(df, filter_df, mo):
     table_ui = mo.ui.table(
         # df.fillna("-"),
-        filter_df(d3).reset_index(drop=True),
+        filter_df(df).reset_index(drop=True),
         show_data_types=False,
         format_mapping={
             "Total population": "{:,}".format,
@@ -400,8 +412,7 @@ def _(d3, filter_df, mo):
             table_ui,
             mo.md("""
         - Rank within filter: This is where each ZIP code ranks only after taking into account your filters. It compares each ZIP code's wealth score against the universe of ZIP codes that meet your filter criteria.
-        - Nationwide rank: This is the ZIP code's rank compared to all other ZIPs nationwide, with no income or geographic filters.
-        - Wealthiest 1000 rank: This is where the ZIP code falls in the Wealthiest 1000 table (below). Only ZIP codes that meet our baseline criteria, have all data points and are wealthy enough to fall within the top 1,000 have a rank in this column.
+        - Nationwide rank: This is the ZIP code's rank compared to all other ZIPs nationwide, with no geographic filters.
         """),
         ]
     )
@@ -422,15 +433,17 @@ def _(pd):
             "https://raw.githubusercontent.com/ACBJ-CAR/wealth-edition-2026/refs/heads/main/data/marimo/wealthiest_zips.csv",
             dtype={"ZIP_CODE_TABULATION_AREA": "str"},
         )
-        .query("income_per_capita >= 75000 and poverty_rate <= .10")
+        .query("income_per_capita >= 75000 and poverty_rate <= .1")
         .nlargest(1000, "concentrated_wealth_per_sq_mile_rpp_adjusted")
     )
-    unfiltered_df["Rank"] = unfiltered_df[
+    unfiltered_df["_rank"] = unfiltered_df[
         "concentrated_wealth_per_sq_mile_rpp_adjusted"
     ].rank(
         ascending=False,
         method="min",
     )
+
+    unfiltered_df.insert(0, "Rank", unfiltered_df["_rank"])
     return (unfiltered_df,)
 
 
@@ -513,7 +526,7 @@ def _(mo, unfiltered_df):
         page_size=20,
     )
     table_ui_1000
-    return (wealthy_1000,)
+    return
 
 
 @app.cell
