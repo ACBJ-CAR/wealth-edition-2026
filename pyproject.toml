@@ -25,6 +25,7 @@ dependencies = [
     "ell-ai>=0.0.17",
     "tabulate>=0.10.0",
     "acbj",
+    "python-dotenv>=1.2.2",
 ]
 
 [tool.jupytext]
@@ -32,3 +33,6 @@ formats = "ipynb,py:percent"
 
 [tool.uv.sources]
 acbj = { git = "ssh://git@github.com/ACBJ-CAR/acbj.git" }
+
+[tool.marimo.runtime]
+dotenv = [".env", ".env.testing"]
