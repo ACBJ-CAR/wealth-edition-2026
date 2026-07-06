@@ -15,13 +15,6 @@ def _():
 
 
 @app.cell
-def _():
-    # for market in markets.MARKETS:
-    #     print market
-    return
-
-
-@app.cell
 def _(mo):
     mo.md(r"""
     <h1>
