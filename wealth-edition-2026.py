@@ -110,8 +110,10 @@ def _(mo):
     min_per_capita_income = mo.ui.number(
         label="Min. per capita income", start=0, value=75000
     )
+    min_home_value = mo.ui.number(label="Min. home value", start=0)
     return (
         min_area,
+        min_home_value,
         min_income,
         min_per_capita_income,
         min_pop,
@@ -239,6 +241,7 @@ def _(
     max_poverty,
     metro,
     min_area,
+    min_home_value,
     min_income,
     min_per_capita_income,
     min_pop,
@@ -271,6 +274,10 @@ def _(
             d_rank["Per capita income"].notna()
             & (d_rank["Per capita income"] >= min_per_capita_income.value)
         ]
+        d_rank = d_rank[
+            d_rank["Median home value"].notna()
+            & (d_rank["Median home value"] >= min_home_value.value)
+        ]
 
         d_rank = d_rank.assign(Nationwide=lambda x: x["_rank"].rank(method="min"))
 
@@ -298,13 +305,8 @@ def _(
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
-def _(max_poverty, min_income, min_per_capita_income, mo):
-    mo.hstack([min_per_capita_income, max_poverty, min_income])
+def _(max_poverty, min_home_value, min_income, min_per_capita_income, mo):
+    mo.hstack([min_per_capita_income, max_poverty, min_income, min_home_value])
     return
 
 
